@@ -38,7 +38,7 @@ reset-local:
 .PHONY: check check-secrets test-live-identity test-live test-integration test-deploy tools
 check:
 	@test -z "$$(gofmt -l main.go main_test.go internal tests/integration/fakeapi)" || { echo 'Run go fmt ./...'; exit 1; }
-	bash -n scripts/backup.sh scripts/check-secrets.sh tests/integration/block-01.sh tests/integration/deploy.sh
+	bash -n scripts/backup.sh scripts/check-secrets.sh scripts/deploy-systemd.sh deploy/install-release.sh tests/integration/block-01.sh tests/integration/deploy.sh
 	python3 tests/scripts/test_backup.py
 	$(GO) test ./...
 	$(GO) vet ./...
