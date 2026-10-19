@@ -8,7 +8,7 @@ RUN CGO_ENABLED=0 go build -buildvcs=false -trimpath -ldflags="-s -w" -o /out/we
 FROM golang:1.26.9-alpine AS goose-build
 RUN CGO_ENABLED=0 go install -tags='no_clickhouse no_libsql no_mssql no_mysql no_sqlite3 no_vertica no_ydb' github.com/pressly/goose/v3/cmd/goose@v3.27.2
 
-FROM alpine:3.23 AS base
+FROM alpine:3.24 AS base
 RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 USER 65532:65532
