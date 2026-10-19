@@ -1,11 +1,11 @@
-FROM golang:1.26.9-alpine AS build
+FROM golang:1.27.2-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -buildvcs=false -trimpath -ldflags="-s -w" -o /out/weather-sum .
 
-FROM golang:1.26.9-alpine AS goose-build
+FROM golang:1.27.2-alpine AS goose-build
 RUN CGO_ENABLED=0 go install -tags='no_clickhouse no_libsql no_mssql no_mysql no_sqlite3 no_vertica no_ydb' github.com/pressly/goose/v3/cmd/goose@v3.27.2
 
 FROM alpine:3.23 AS base
