@@ -14,5 +14,5 @@ trap 'rm -rf -- "$build_directory"' EXIT
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o "$build_directory/weather-sum" .
 git archive HEAD deploy migrations scripts/db-grants.sql | tar -x -C "$build_directory"
 printf '%s\n' "$(git rev-parse HEAD)" > "$build_directory/REVISION"
-tar -C "$build_directory" -czf - . | ssh "$target" "umask 022; mkdir -p '$release' && tar -xzf - -C '$release'"
+tar -C "$build_directory" -czf - . | ssh "$target" "umask 022; install -d -m 755 /opt/weather-sum /opt/weather-sum/releases '$release' && tar -xzf - -C '$release'"
 ssh "$target" "bash '$release/deploy/install-release.sh' '$release'"
