@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.idea/
+.agents/
+.codex/
+.aws/
+postgres_data/
+/weather-sum
+/bin/
+/coverage.out
+*.log
+*.dump
+*.backup
+
+/backups/

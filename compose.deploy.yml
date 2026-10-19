@@ -1,0 +1,73 @@
+# Deployment configuration, independent of the local file: no published DB port.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-application}
+    volumes:
+      - pg_database_data:/var/lib/postgresql/data
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  bot:
+    build:
+      context: .
+      target: runtime
+    restart: on-failure:5
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN}
+      DATABASE_URL: ${DATABASE_URL:?Use weather_app with host db}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+      WEATHERAPI_API_KEY: ${WEATHERAPI_API_KEY:-}
+      MET_NO_USER_AGENT: ${MET_NO_USER_AGENT:-}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT:-5s}
+      DB_TIMEOUT: ${DB_TIMEOUT:-5s}
+      POLL_TIMEOUT: ${POLL_TIMEOUT:-30s}
+      SEND_TIMEOUT: ${SEND_TIMEOUT:-10s}
+      COMMAND_TIMEOUT: ${COMMAND_TIMEOUT:-25s}
+      SHUTDOWN_TIMEOUT: ${SHUTDOWN_TIMEOUT:-15s}
+      CACHE_TTL: ${CACHE_TTL:-5m}
+      CACHE_CAPACITY: ${CACHE_CAPACITY:-128}
+      CHAT_COOLDOWN: ${CHAT_COOLDOWN:-2s}
+      QUEUE_CAPACITY: ${QUEUE_CAPACITY:-1000}
+      WORKERS: ${WORKERS:-4}
+      MAX_ATTEMPTS: ${MAX_ATTEMPTS:-3}
+      REQUESTS_PER_SECOND: ${REQUESTS_PER_SECOND:-5}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 20s
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [database, outbound]
+    healthcheck:
+      test: [CMD, weather-sum, -healthcheck]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  migrate:
+    profiles: [tools]
+    build:
+      context: .
+      target: migrator
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: ${GOOSE_DBSTRING:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [database]
+networks:
+  database:
+    internal: true
+  outbound:
+volumes:
+  pg_database_data:

@@ -1,0 +1,31 @@
+name: Checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: make check
+      - run: go test -race ./...
+      - run: make tools
+      - run: govulncheck ./...
+      - run: make test-integration
+      - run: docker build --target runtime -t weather-sum:ci .
+      - run: docker build --target migrator -t weather-sum-migrator:ci .
+      - run: docker build --target test-api -t weather-sum-fakeapi:ci .
+      - run: make test-deploy
+        env:
+          DEPLOY_SKIP_BUILD: '1'
+          DEPLOY_RUNTIME_IMAGE: weather-sum:ci
+          DEPLOY_MIGRATOR_IMAGE: weather-sum-migrator:ci
+          DEPLOY_FAKEAPI_IMAGE: weather-sum-fakeapi:ci
+      - name: Scan tracked files and history for secrets
+        run: make check-secrets
